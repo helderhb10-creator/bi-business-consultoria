@@ -216,6 +216,94 @@
   .modal-close:hover{color:var(--text); border-color:var(--muted);}
   .modal-title{font-family:'Space Grotesk', sans-serif; font-size:19px; font-weight:600; margin-bottom:4px; padding-right:30px;}
   .modal-sub{font-size:13.5px; color:var(--muted); margin-bottom:20px;}
+  .modal-box.wide{max-width:680px;}
+
+  /* explainer modal content */
+  .explain-lead{font-size:15px; color:var(--text); line-height:1.6; margin-bottom:24px;}
+  .explain-lead strong{color:var(--cyan);}
+  .benefit-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:32px;}
+  .benefit-item{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:16px 18px;
+  }
+  .benefit-item .b-num{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--amber); margin-bottom:6px; display:block;}
+  .benefit-item .b-title{font-family:'Space Grotesk', sans-serif; font-size:14.5px; font-weight:600; margin-bottom:4px;}
+  .benefit-item .b-desc{font-size:12.5px; color:var(--muted); line-height:1.5;}
+
+  .demo-section{margin-top:8px;}
+  .demo-section .demo-label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--amber);
+    text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px; display:flex; align-items:center; gap:8px;
+  }
+  .demo-section .demo-label::after{content:''; flex:1; height:1px; background:var(--line);}
+
+  /* demo 1: kpi toggle */
+  .demo-kpi{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:22px; margin-bottom:24px;
+  }
+  .demo-kpi-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+  .demo-kpi-top .kpi-name{font-family:'Space Grotesk', sans-serif; font-size:14.5px; font-weight:600;}
+  .period-toggle{display:flex; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:7px; padding:3px;}
+  .period-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; padding:6px 11px; border-radius:5px; cursor:pointer;
+    color:var(--muted); border:none; background:transparent;
+  }
+  .period-btn.active{background:var(--cyan); color:#08211E; font-weight:600;}
+  .demo-kpi-value{font-family:'IBM Plex Mono', monospace; font-size:38px; font-weight:700; color:var(--text); transition:opacity .15s ease;}
+  .demo-kpi-value .unit{font-size:18px; color:var(--muted); margin-left:6px;}
+  .demo-kpi-delta{font-family:'IBM Plex Mono', monospace; font-size:12.5px; margin-top:6px;}
+  .demo-kpi-delta.up{color:var(--cyan);}
+  .demo-kpi-delta.down{color:var(--amber);}
+
+  /* demo 2: interactive bar chart */
+  .demo-chart{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:22px 22px 14px;
+  }
+  .demo-chart-title{font-family:'Space Grotesk', sans-serif; font-size:14.5px; font-weight:600; margin-bottom:16px;}
+  .demo-chart svg{width:100%; height:auto; display:block; overflow:visible;}
+  .demo-bar{fill:var(--cyan); cursor:pointer; transition:fill .15s ease;}
+  .demo-bar:hover{fill:var(--amber);}
+  .demo-tooltip{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; fill:#EAECF2;
+  }
+  .demo-chart-hint{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--muted); text-align:center; margin-top:10px;}
+
+  /* demo 3: donut/pie */
+  .demo-donut-wrap{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:22px;
+    display:grid; grid-template-columns:200px 1fr; gap:24px; align-items:center;
+  }
+  .demo-donut-title{font-family:'Space Grotesk', sans-serif; font-size:14.5px; font-weight:600; margin-bottom:16px; grid-column:1/-1;}
+  .demo-donut-svg{width:100%; height:auto;}
+  .demo-donut-seg{cursor:pointer; transition:opacity .15s ease, stroke-width .15s ease;}
+  .demo-donut-seg:hover, .demo-donut-seg.hover{opacity:0.85;}
+  .demo-legend{display:flex; flex-direction:column; gap:10px;}
+  .legend-item{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:7px; cursor:pointer;
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; border:1px solid transparent;
+  }
+  .legend-item:hover, .legend-item.active{background:var(--surface); border-color:var(--line);}
+  .legend-dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .legend-label{color:var(--text); flex:1;}
+  .legend-pct{color:var(--muted);}
+
+  /* demo 4: kpi cards row */
+  .demo-kpi-row{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;
+  }
+  .demo-kpi-card{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:16px;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .demo-kpi-card:hover{transform:translateY(-2px); border-color:var(--cyan);}
+  .demo-kpi-card .kc-label{font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--muted); margin-bottom:8px;}
+  .demo-kpi-card .kc-value{font-family:'IBM Plex Mono', monospace; font-size:20px; font-weight:700; color:var(--text);}
+  .demo-kpi-card .kc-value.cyan{color:var(--cyan);}
+  .demo-kpi-card .kc-value.amber{color:var(--amber);}
+
+  @media (max-width:600px){
+    .demo-donut-wrap{grid-template-columns:1fr;}
+    .demo-kpi-row{grid-template-columns:1fr 1fr;}
+  }
 
   footer{padding:32px 0; text-align:center;}
   footer p{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted);}
@@ -418,6 +506,9 @@
         <circle cx="770" cy="478" r="4" fill="var(--amber)"/>
       </g>
     </svg>
+    <div style="margin-top:28px; text-align:center;">
+      <a class="btn-primary" href="#" id="openExplainBtn">Como funciona um indicador de BI, na prática →</a>
+    </div>
   </div>
 </section>
 
@@ -567,6 +658,229 @@
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="explainModal">
+  <div class="modal-box wide">
+    <button class="modal-close" id="closeExplainBtn" type="button" aria-label="Fechar">✕</button>
+    <div class="modal-title">Como funciona um indicador de BI</div>
+    <div class="modal-sub">Explicação rápida + exemplos interativos de verdade — mexa neles.</div>
+
+    <p class="explain-lead">
+      Um <strong>indicador de BI</strong> (ou KPI) é um número que resume o que está acontecendo na sua operação agora — sem você precisar abrir planilha nenhuma. A diferença de um bom painel é que esse número <strong>reage</strong>: muda quando você troca o período, o filtro ou a região, e mostra na hora se está indo bem ou mal.
+    </p>
+
+    <div class="benefit-grid">
+      <div class="benefit-item">
+        <span class="b-num">01</span>
+        <div class="b-title">Decisão em segundos</div>
+        <div class="b-desc">Em vez de pedir um relatório e esperar, você olha o painel e já sabe onde agir.</div>
+      </div>
+      <div class="benefit-item">
+        <span class="b-num">02</span>
+        <div class="b-title">Menos "achismo"</div>
+        <div class="b-desc">O número vem direto da operação, sempre atualizado — não de planilha manual desatualizada.</div>
+      </div>
+      <div class="benefit-item">
+        <span class="b-num">03</span>
+        <div class="b-title">Comparação automática</div>
+        <div class="b-desc">O painel mostra sozinho se o resultado está melhor ou pior que o período anterior.</div>
+      </div>
+      <div class="benefit-item">
+        <span class="b-num">04</span>
+        <div class="b-title">Um clique, vários ângulos</div>
+        <div class="b-desc">A mesma informação, vista por região, transportadora ou período — sem refazer nada.</div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <div class="demo-label">Exemplo 1 — cartão de indicador</div>
+    </div>
+    <div class="demo-kpi">
+      <div class="demo-kpi-top">
+        <span class="kpi-name">SLA de entrega no prazo</span>
+        <div class="period-toggle" id="periodToggle">
+          <button class="period-btn active" data-value="94.2" data-delta="+1,8 pp vs. mês anterior" data-dir="up">Mensal</button>
+          <button class="period-btn" data-value="91.5" data-delta="+0,6 pp vs. trimestre anterior" data-dir="up">Trimestral</button>
+          <button class="period-btn" data-value="88.9" data-delta="-2,1 pp vs. ano anterior" data-dir="down">Anual</button>
+        </div>
+      </div>
+      <div class="demo-kpi-value" id="kpiValue">94,2<span class="unit">%</span></div>
+      <div class="demo-kpi-delta up" id="kpiDelta">▲ +1,8 pp vs. mês anterior</div>
+    </div>
+
+    <div class="demo-section">
+      <div class="demo-label">Exemplo 2 — cartões de indicador (visão geral)</div>
+    </div>
+    <div class="demo-kpi-row">
+      <div class="demo-kpi-card">
+        <div class="kc-label">SLA NO PRAZO</div>
+        <div class="kc-value cyan">96,4%</div>
+      </div>
+      <div class="demo-kpi-card">
+        <div class="kc-label">PEDIDOS/DIA</div>
+        <div class="kc-value">2.480</div>
+      </div>
+      <div class="demo-kpi-card">
+        <div class="kc-label">CUSTO/ENTREGA</div>
+        <div class="kc-value amber">R$ 14,20</div>
+      </div>
+      <div class="demo-kpi-card">
+        <div class="kc-label">RUPTURA ESTOQUE</div>
+        <div class="kc-value">1,8%</div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <div class="demo-label">Exemplo 3 — gráfico de barras interativo</div>
+    </div>
+    <div class="demo-chart">
+      <div class="demo-chart-title">Entregas por transportadora (passe o mouse nas barras)</div>
+      <svg viewBox="0 0 560 190" id="demoChartSvg">
+        <!-- bars drawn/updated by JS -->
+      </svg>
+      <div class="demo-chart-hint">valores simulados, só para ilustrar a interatividade</div>
+    </div>
+
+    <div class="demo-section">
+      <div class="demo-label">Exemplo 4 — gráfico de pizza</div>
+    </div>
+    <div class="demo-donut-wrap">
+      <div class="demo-donut-title">Status dos pedidos (clique numa fatia ou na legenda)</div>
+      <svg viewBox="0 0 200 200" class="demo-donut-svg" id="demoDonutSvg">
+        <!-- segments drawn/updated by JS -->
+      </svg>
+      <div class="demo-legend" id="demoLegend"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Explain modal: open/close ----
+  const explainModal = document.getElementById('explainModal');
+  document.getElementById('openExplainBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    explainModal.classList.add('open');
+  });
+  document.getElementById('closeExplainBtn').addEventListener('click', () => {
+    explainModal.classList.remove('open');
+  });
+  explainModal.addEventListener('click', (e) => { if(e.target === explainModal) explainModal.classList.remove('open'); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape') explainModal.classList.remove('open'); });
+
+  // ---- Demo 1: KPI period toggle ----
+  const periodToggle = document.getElementById('periodToggle');
+  const kpiValue = document.getElementById('kpiValue');
+  const kpiDelta = document.getElementById('kpiDelta');
+  periodToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.period-btn');
+    if(!btn) return;
+    periodToggle.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    kpiValue.style.opacity = '0';
+    setTimeout(() => {
+      kpiValue.innerHTML = btn.dataset.value.replace('.', ',') + '<span class="unit">%</span>';
+      const dir = btn.dataset.dir;
+      kpiDelta.className = 'demo-kpi-delta ' + dir;
+      kpiDelta.textContent = (dir === 'up' ? '▲ ' : '▼ ') + btn.dataset.delta;
+      kpiValue.style.opacity = '1';
+    }, 120);
+  });
+
+  // ---- Demo 2: interactive bar chart ----
+  const chartData = [
+    { label: 'Log Rápida', value: 92 },
+    { label: 'Trans Norte', value: 74 },
+    { label: 'Via Sul', value: 85 },
+    { label: 'Expresso RJ', value: 68 },
+    { label: 'Malha Leste', value: 96 },
+    { label: 'Cargo Plus', value: 79 }
+  ];
+  const chartSvg = document.getElementById('demoChartSvg');
+  function renderDemoChart(){
+    const barWidth = 56, gap = 30, chartHeight = 130, baseY = 150;
+    let svgContent = '';
+    chartData.forEach((d, i) => {
+      const x = 20 + i * (barWidth + gap);
+      const h = (d.value / 100) * chartHeight;
+      const y = baseY - h;
+      svgContent += `
+        <g class="demo-bar-group" data-value="${d.value}" data-label="${d.label}">
+          <rect class="demo-bar" x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="4"></rect>
+          <text x="${x + barWidth/2}" y="${baseY + 18}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">${d.label}</text>
+          <text class="demo-tooltip" x="${x + barWidth/2}" y="${y - 10}" text-anchor="middle" opacity="0" font-weight="700">${d.value}%</text>
+        </g>`;
+    });
+    chartSvg.innerHTML = svgContent;
+
+    chartSvg.querySelectorAll('.demo-bar-group').forEach(g => {
+      const tooltip = g.querySelector('.demo-tooltip');
+      g.addEventListener('mouseenter', () => { tooltip.setAttribute('opacity', '1'); });
+      g.addEventListener('mouseleave', () => { tooltip.setAttribute('opacity', '0'); });
+    });
+  }
+  renderDemoChart();
+
+  // ---- Demo 3: donut / pizza chart ----
+  const donutData = [
+    { label: 'No prazo', value: 72, color: 'var(--cyan)' },
+    { label: 'Atraso leve', value: 20, color: 'var(--amber)' },
+    { label: 'Atraso crítico', value: 8, color: '#EF5A5A' }
+  ];
+  const donutSvg = document.getElementById('demoDonutSvg');
+  const legendEl = document.getElementById('demoLegend');
+  const R = 70, CX = 100, CY = 100, STROKE = 26, CIRC = 2 * Math.PI * R;
+
+  function renderDonut(){
+    let offset = 0;
+    let svgParts = `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#2A3347" stroke-width="${STROKE}"></circle>`;
+    let legendParts = '';
+    donutData.forEach((d, i) => {
+      const segLen = (d.value / 100) * CIRC;
+      svgParts += `<circle class="demo-donut-seg" data-i="${i}" cx="${CX}" cy="${CY}" r="${R}" fill="none"
+        stroke="${d.color}" stroke-width="${STROKE}" stroke-dasharray="${segLen} ${CIRC}"
+        stroke-dashoffset="${-offset}" transform="rotate(-90 ${CX} ${CY})"></circle>`;
+      offset += segLen;
+      legendParts += `<div class="legend-item" data-i="${i}">
+        <span class="legend-dot" style="background:${d.color};"></span>
+        <span class="legend-label">${d.label}</span>
+        <span class="legend-pct">${d.value}%</span>
+      </div>`;
+    });
+    svgParts += `<text id="donutCenterVal" x="${CX}" y="${CY - 4}" text-anchor="middle" fill="#EAECF2" font-family="IBM Plex Mono, monospace" font-size="22" font-weight="700">72%</text>
+      <text id="donutCenterLbl" x="${CX}" y="${CY + 16}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">no prazo</text>`;
+    donutSvg.innerHTML = svgParts;
+    legendEl.innerHTML = legendParts;
+    attachDonutEvents();
+  }
+
+  function highlightSegment(i){
+    donutSvg.querySelectorAll('.demo-donut-seg').forEach(s => s.classList.remove('hover'));
+    legendEl.querySelectorAll('.legend-item').forEach(l => l.classList.remove('active'));
+    const centerVal = document.getElementById('donutCenterVal');
+    const centerLbl = document.getElementById('donutCenterLbl');
+    if(i === null){
+      centerVal.textContent = donutData[0].value + '%';
+      centerLbl.textContent = donutData[0].label.toLowerCase();
+      return;
+    }
+    donutSvg.querySelector(`.demo-donut-seg[data-i="${i}"]`).classList.add('hover');
+    legendEl.querySelector(`.legend-item[data-i="${i}"]`).classList.add('active');
+    centerVal.textContent = donutData[i].value + '%';
+    centerLbl.textContent = donutData[i].label.toLowerCase();
+  }
+
+  function attachDonutEvents(){
+    donutSvg.querySelectorAll('.demo-donut-seg').forEach(seg => {
+      seg.addEventListener('mouseenter', () => highlightSegment(Number(seg.dataset.i)));
+      seg.addEventListener('mouseleave', () => highlightSegment(null));
+    });
+    legendEl.querySelectorAll('.legend-item').forEach(item => {
+      item.addEventListener('mouseenter', () => highlightSegment(Number(item.dataset.i)));
+      item.addEventListener('mouseleave', () => highlightSegment(null));
+    });
+  }
+  renderDonut();
+</script>
 
 <script>
   const emailCopy = document.getElementById('emailCopy');
