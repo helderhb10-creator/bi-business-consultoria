@@ -726,9 +726,9 @@
       <div class="demo-kpi-top">
         <span class="kpi-name" id="slaCardLabel">SLA de entrega no prazo</span>
         <div class="period-toggle" id="periodToggle">
-          <button class="period-btn active" data-value="94.2" data-delta="+1,8 pp vs. mês anterior" data-dir="up">Mensal</button>
-          <button class="period-btn" data-value="91.5" data-delta="+0,6 pp vs. trimestre anterior" data-dir="up">Trimestral</button>
-          <button class="period-btn" data-value="88.9" data-delta="-2,1 pp vs. ano anterior" data-dir="down">Anual</button>
+          <button class="period-btn active" type="button" data-period="mensal">Mensal</button>
+          <button class="period-btn" type="button" data-period="trimestral">Trimestral</button>
+          <button class="period-btn" type="button" data-period="anual">Anual</button>
         </div>
       </div>
       <div class="demo-kpi-value" id="kpiValue">94,2<span class="unit">%</span></div>
@@ -785,23 +785,50 @@
   explainModal.addEventListener('click', (e) => { if(e.target === explainModal) explainModal.classList.remove('open'); });
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape') explainModal.classList.remove('open'); });
 
-  // ---- Cross-filtered demo data ----
+  // ---- Cross-filtered demo data (raw numbers; formatted at render time) ----
   const carrierData = [
-    { name: 'Log Rápida',   bar: 92, sla: 97.8, orders: '420',  cost: '12,40', stock: '1,0%', status: { onTime: 90, late: 8,  critical: 2 } },
-    { name: 'Trans Norte',  bar: 74, sla: 88.1, orders: '365',  cost: '15,90', stock: '2,6%', status: { onTime: 68, late: 23, critical: 9 } },
-    { name: 'Via Sul',      bar: 85, sla: 93.0, orders: '402',  cost: '13,70', stock: '1,5%', status: { onTime: 80, late: 15, critical: 5 } },
-    { name: 'Expresso RJ',  bar: 68, sla: 84.6, orders: '298',  cost: '16,90', stock: '3,4%', status: { onTime: 60, late: 27, critical: 13 } },
-    { name: 'Malha Leste',  bar: 96, sla: 98.5, orders: '451',  cost: '11,10', stock: '0,7%', status: { onTime: 94, late: 5,  critical: 1 } },
-    { name: 'Cargo Plus',   bar: 79, sla: 90.4, orders: '344',  cost: '14,60', stock: '2,0%', status: { onTime: 75, late: 19, critical: 6 } }
+    { name: 'Log Rápida',   bar: 92, sla: 97.8, orders: 420, cost: 12.40, stock: 1.0, status: { onTime: 90, late: 8,  critical: 2 } },
+    { name: 'Trans Norte',  bar: 74, sla: 88.1, orders: 365, cost: 15.90, stock: 2.6, status: { onTime: 68, late: 23, critical: 9 } },
+    { name: 'Via Sul',      bar: 85, sla: 93.0, orders: 402, cost: 13.70, stock: 1.5, status: { onTime: 80, late: 15, critical: 5 } },
+    { name: 'Expresso RJ',  bar: 68, sla: 84.6, orders: 298, cost: 16.90, stock: 3.4, status: { onTime: 60, late: 27, critical: 13 } },
+    { name: 'Malha Leste',  bar: 96, sla: 98.5, orders: 451, cost: 11.10, stock: 0.7, status: { onTime: 94, late: 5,  critical: 1 } },
+    { name: 'Cargo Plus',   bar: 79, sla: 90.4, orders: 344, cost: 14.60, stock: 2.0, status: { onTime: 75, late: 19, critical: 6 } }
   ];
   const statusAggregate = {
-    onTime:   { key: 'onTime',   label: 'no prazo',        color: 'var(--cyan)',  sla: '100%', orders: '1.786', cost: '12,10', stock: '0,6%' },
-    late:     { key: 'late',     label: 'atraso leve',      color: 'var(--amber)', sla: '0%',   orders: '496',   cost: '15,80', stock: '2,1%' },
-    critical: { key: 'critical', label: 'atraso crítico',   color: '#EF5A5A',      sla: '0%',   orders: '198',   cost: '19,40', stock: '4,8%' }
+    onTime:   { label: 'no prazo',      sla: 100, orders: 1786, cost: 12.10, stock: 0.6 },
+    late:     { label: 'atraso leve',   sla: 0,   orders: 496,  cost: 15.80, stock: 2.1 },
+    critical: { label: 'atraso crítico', sla: 0,  orders: 198,  cost: 19.40, stock: 4.8 }
   };
-  const overall = { sla: 96.4, orders: '2.480', cost: '14,20', stock: '1,8%' };
+  const overall = { sla: 96.4, orders: 2480, cost: 14.20, stock: 1.8, status: { onTime: 72, late: 20, critical: 8 } };
+  const periodMeta = {
+    mensal:     { label: 'mês anterior',       ratio: 1 },
+    trimestral: { label: 'trimestre anterior', ratio: 0.9713 },
+    anual:      { label: 'ano anterior',       ratio: 0.9437 }
+  };
 
-  let activeFilter = null; // { type: 'carrier'|'status', key }
+  let activeFilter = null;   // { type: 'carrier'|'status', key }
+  let activePeriod = 'mensal';
+
+  // ---- formatters ----
+  const fmtPct = n => n.toFixed(1).replace('.', ',') + '%';
+  const fmtCost = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  const fmtInt = n => Math.round(n).toLocaleString('pt-BR');
+
+  // ---- ratio helpers: apply period ratio to SLA-linked figures ----
+  function ratioSla(base){ return base * periodMeta[activePeriod].ratio; }
+  function ratioCost(base){ return base * (1 + (1 - periodMeta[activePeriod].ratio) * 1.5); }
+  function ratioOrders(base){ return base * (1 - (1 - periodMeta[activePeriod].ratio) * 0.3); }
+  function ratioStock(base){ return base * (1 + (1 - periodMeta[activePeriod].ratio) * 2); }
+  function ratioStatus(base){
+    const ratio = periodMeta[activePeriod].ratio;
+    const removed = base.onTime * (1 - ratio);
+    const lateShare = base.late / (base.late + base.critical || 1);
+    let onTime = Math.round(base.onTime * ratio);
+    let late = Math.round(base.late + removed * lateShare);
+    let critical = Math.round(base.critical + removed * (1 - lateShare));
+    onTime += 100 - (onTime + late + critical);
+    return { onTime, late, critical };
+  }
 
   // ---- DOM refs ----
   const periodToggle = document.getElementById('periodToggle');
@@ -821,20 +848,14 @@
   const filterPillWrap = document.getElementById('filterPillWrap');
   const filterPillLabel = document.getElementById('filterPillLabel');
 
-  // ---- Period toggle (independent of cross-filter, only active when no filter) ----
+  // ---- Period toggle: now part of the shared cross-filter state ----
   periodToggle.addEventListener('click', (e) => {
     const btn = e.target.closest('.period-btn');
-    if(!btn || activeFilter) return;
+    if(!btn) return;
     periodToggle.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    kpiValue.style.opacity = '0';
-    setTimeout(() => {
-      kpiValue.innerHTML = btn.dataset.value.replace('.', ',') + '<span class="unit">%</span>';
-      const dir = btn.dataset.dir;
-      kpiDelta.className = 'demo-kpi-delta ' + dir;
-      kpiDelta.textContent = (dir === 'up' ? '▲ ' : '▼ ') + btn.dataset.delta;
-      kpiValue.style.opacity = '1';
-    }, 120);
+    activePeriod = btn.dataset.period;
+    renderAll();
   });
 
   // ---- Bar chart ----
@@ -842,14 +863,15 @@
     const barWidth = 56, gap = 30, chartHeight = 130, baseY = 150;
     let svgContent = '';
     carrierData.forEach((d, i) => {
+      const scaledBar = Math.min(100, ratioSla(d.bar));
       const x = 20 + i * (barWidth + gap);
-      const h = (d.bar / 100) * chartHeight;
+      const h = (scaledBar / 100) * chartHeight;
       const y = baseY - h;
       svgContent += `
         <g class="demo-bar-group" data-i="${i}">
           <rect class="demo-bar" x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="4"></rect>
           <text x="${x + barWidth/2}" y="${baseY + 18}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">${d.name}</text>
-          <text class="demo-tooltip" x="${x + barWidth/2}" y="${y - 10}" text-anchor="middle" opacity="0" font-weight="700">${d.bar}%</text>
+          <text class="demo-tooltip" x="${x + barWidth/2}" y="${y - 10}" text-anchor="middle" opacity="0" font-weight="700">${scaledBar.toFixed(0)}%</text>
         </g>`;
     });
     chartSvg.innerHTML = svgContent;
@@ -859,26 +881,28 @@
       g.addEventListener('mouseleave', () => { tooltip.setAttribute('opacity', '0'); });
       g.addEventListener('click', () => {
         const i = Number(g.dataset.i);
-        setFilter(activeFilter && activeFilter.type === 'carrier' && activeFilter.key === i ? null : { type: 'carrier', key: i });
+        activeFilter = activeFilter && activeFilter.type === 'carrier' && activeFilter.key === i ? null : { type: 'carrier', key: i };
+        renderAll();
       });
+    });
+    // reapply dim/select state for current filter
+    chartSvg.querySelectorAll('.demo-bar-group').forEach(g => {
+      const i = Number(g.dataset.i);
+      const isSelected = activeFilter && activeFilter.type === 'carrier' && activeFilter.key === i;
+      g.classList.toggle('dimmed', !!activeFilter && !isSelected);
+      g.querySelector('.demo-bar').classList.toggle('selected', isSelected);
     });
   }
 
   // ---- Donut / pizza ----
   const R = 70, CX = 100, CY = 100, STROKE = 26, CIRC = 2 * Math.PI * R;
   function currentDonutData(){
-    if(activeFilter && activeFilter.type === 'carrier'){
-      const s = carrierData[activeFilter.key].status;
-      return [
-        { key: 'onTime', label: 'No prazo', value: s.onTime, color: 'var(--cyan)' },
-        { key: 'late', label: 'Atraso leve', value: s.late, color: 'var(--amber)' },
-        { key: 'critical', label: 'Atraso crítico', value: s.critical, color: '#EF5A5A' }
-      ];
-    }
+    const base = activeFilter && activeFilter.type === 'carrier' ? carrierData[activeFilter.key].status : overall.status;
+    const s = ratioStatus(base);
     return [
-      { key: 'onTime', label: 'No prazo', value: 72, color: 'var(--cyan)' },
-      { key: 'late', label: 'Atraso leve', value: 20, color: 'var(--amber)' },
-      { key: 'critical', label: 'Atraso crítico', value: 8, color: '#EF5A5A' }
+      { key: 'onTime', label: 'No prazo', value: s.onTime, color: 'var(--cyan)' },
+      { key: 'late', label: 'Atraso leve', value: s.late, color: 'var(--amber)' },
+      { key: 'critical', label: 'Atraso crítico', value: s.critical, color: '#EF5A5A' }
     ];
   }
 
@@ -901,98 +925,90 @@
         <span class="legend-pct">${d.value}%</span>
       </div>`;
     });
-    const centerVal = activeFilter && activeFilter.type === 'status' ? donutData.find(d => d.key === activeFilter.key).value : donutData[0].value;
-    const centerLbl = activeFilter && activeFilter.type === 'status' ? donutData.find(d => d.key === activeFilter.key).label : donutData[0].label;
-    svgParts += `<text x="${CX}" y="${CY - 4}" text-anchor="middle" fill="#EAECF2" font-family="IBM Plex Mono, monospace" font-size="22" font-weight="700">${centerVal}%</text>
-      <text x="${CX}" y="${CY + 16}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">${centerLbl.toLowerCase()}</text>`;
+    const centerD = activeFilter && activeFilter.type === 'status' ? donutData.find(d => d.key === activeFilter.key) : donutData[0];
+    svgParts += `<text x="${CX}" y="${CY - 4}" text-anchor="middle" fill="#EAECF2" font-family="IBM Plex Mono, monospace" font-size="22" font-weight="700">${centerD.value}%</text>
+      <text x="${CX}" y="${CY + 16}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">${centerD.label.toLowerCase()}</text>`;
     donutSvg.innerHTML = svgParts;
     legendEl.innerHTML = legendParts;
 
     donutSvg.querySelectorAll('.demo-donut-seg').forEach(seg => {
       seg.addEventListener('click', () => {
         const key = seg.dataset.key;
-        setFilter(activeFilter && activeFilter.type === 'status' && activeFilter.key === key ? null : { type: 'status', key });
+        activeFilter = activeFilter && activeFilter.type === 'status' && activeFilter.key === key ? null : { type: 'status', key };
+        renderAll();
       });
     });
     legendEl.querySelectorAll('.legend-item').forEach(item => {
       item.addEventListener('click', () => {
         const key = item.dataset.key;
-        setFilter(activeFilter && activeFilter.type === 'status' && activeFilter.key === key ? null : { type: 'status', key });
+        activeFilter = activeFilter && activeFilter.type === 'status' && activeFilter.key === key ? null : { type: 'status', key };
+        renderAll();
       });
     });
   }
 
-  // ---- Shared filter state: updates all 4 examples together ----
-  function setFilter(filter){
-    activeFilter = filter;
+  // ---- Main SLA card + KPI row: driven by activeFilter + activePeriod together ----
+  function renderKpis(){
+    const pMeta = periodMeta[activePeriod];
+    let baseSla, baseOrders, baseCost, baseStock, label;
 
     if(!activeFilter){
+      baseSla = overall.sla; baseOrders = overall.orders; baseCost = overall.cost; baseStock = overall.stock;
+      label = 'SLA de entrega no prazo';
       filterPillWrap.style.display = 'none';
       demoKpiEl.classList.remove('filtered');
       kpiRowEl.classList.remove('filtered');
-      slaCardLabel.textContent = 'SLA de entrega no prazo';
-      periodToggle.style.opacity = '1';
-      periodToggle.style.pointerEvents = 'auto';
-      const activeBtn = periodToggle.querySelector('.period-btn.active');
-      kpiValue.innerHTML = activeBtn.dataset.value.replace('.', ',') + '<span class="unit">%</span>';
-      kpiDelta.className = 'demo-kpi-delta ' + activeBtn.dataset.dir;
-      kpiDelta.textContent = (activeBtn.dataset.dir === 'up' ? '▲ ' : '▼ ') + activeBtn.dataset.delta;
-      kcSla.textContent = overall.sla.toString().replace('.', ',') + '%';
-      kcOrders.textContent = overall.orders;
-      kcCost.textContent = 'R$ ' + overall.cost;
-      kcStock.textContent = overall.stock;
       chartTitle.textContent = 'Entregas por transportadora (clique numa barra para filtrar)';
     } else if(activeFilter.type === 'carrier'){
       const c = carrierData[activeFilter.key];
+      baseSla = c.sla; baseOrders = c.orders; baseCost = c.cost; baseStock = c.stock;
+      label = 'SLA de entrega no prazo — ' + c.name;
       filterPillWrap.style.display = 'block';
       filterPillLabel.textContent = c.name;
       demoKpiEl.classList.add('filtered');
       kpiRowEl.classList.add('filtered');
-      slaCardLabel.textContent = 'SLA de entrega no prazo — ' + c.name;
-      periodToggle.style.opacity = '0.4';
-      periodToggle.style.pointerEvents = 'none';
-      kpiValue.innerHTML = c.sla.toString().replace('.', ',') + '<span class="unit">%</span>';
-      kpiDelta.className = 'demo-kpi-delta up';
-      kpiDelta.textContent = 'indicador filtrado por transportadora';
-      kcSla.textContent = c.sla.toString().replace('.', ',') + '%';
-      kcOrders.textContent = c.orders;
-      kcCost.textContent = 'R$ ' + c.cost;
-      kcStock.textContent = c.stock;
       chartTitle.textContent = 'Entregas por transportadora — filtrado por ' + c.name;
-    } else if(activeFilter.type === 'status'){
+    } else {
       const s = statusAggregate[activeFilter.key];
+      baseSla = s.sla; baseOrders = s.orders; baseCost = s.cost; baseStock = s.stock;
+      label = 'SLA de entrega no prazo — pedidos ' + s.label;
       filterPillWrap.style.display = 'block';
       filterPillLabel.textContent = 'pedidos ' + s.label;
       demoKpiEl.classList.add('filtered');
       kpiRowEl.classList.add('filtered');
-      slaCardLabel.textContent = 'SLA de entrega no prazo — pedidos ' + s.label;
-      periodToggle.style.opacity = '0.4';
-      periodToggle.style.pointerEvents = 'none';
-      kpiValue.innerHTML = s.sla + '<span class="unit"></span>';
-      kpiDelta.className = 'demo-kpi-delta up';
-      kpiDelta.textContent = 'indicador filtrado por status do pedido';
-      kcSla.textContent = s.sla;
-      kcOrders.textContent = s.orders;
-      kcCost.textContent = 'R$ ' + s.cost;
-      kcStock.textContent = s.stock;
       chartTitle.textContent = 'Entregas por transportadora (destacado o status selecionado)';
     }
 
-    // bar chart highlight/dim
-    chartSvg.querySelectorAll('.demo-bar-group').forEach(g => {
-      const i = Number(g.dataset.i);
-      const isSelected = activeFilter && activeFilter.type === 'carrier' && activeFilter.key === i;
-      g.classList.toggle('dimmed', !!activeFilter && !isSelected);
-      g.querySelector('.demo-bar').classList.toggle('selected', isSelected);
-    });
+    slaCardLabel.textContent = label;
+    const slaScaled = Math.min(100, ratioSla(baseSla));
+    kpiValue.innerHTML = slaScaled.toFixed(1).replace('.', ',') + '<span class="unit">%</span>';
+    if(activeFilter){
+      kpiDelta.className = 'demo-kpi-delta up';
+      kpiDelta.textContent = activeFilter.type === 'carrier' ? 'filtrado por transportadora · período: ' + pMeta.label.replace(' anterior', '') : 'filtrado por status · período: ' + pMeta.label.replace(' anterior', '');
+    } else {
+      const dir = activePeriod === 'mensal' ? 'up' : (slaScaled < overall.sla ? 'down' : 'up');
+      kpiDelta.className = 'demo-kpi-delta ' + dir;
+      const diff = Math.abs(overall.sla - slaScaled).toFixed(1).replace('.', ',');
+      kpiDelta.textContent = activePeriod === 'mensal'
+        ? '▲ +1,8 pp vs. mês anterior'
+        : (dir === 'down' ? '▼ -' : '▲ +') + diff + ' pp vs. ' + pMeta.label;
+    }
 
+    kcSla.textContent = fmtPct(slaScaled);
+    kcOrders.textContent = fmtInt(ratioOrders(baseOrders));
+    kcCost.textContent = fmtCost(ratioCost(baseCost));
+    kcStock.textContent = fmtPct(ratioStock(baseStock));
+  }
+
+  function renderAll(){
+    renderKpis();
+    renderDemoChart();
     renderDonut();
   }
 
-  document.getElementById('clearFilterBtn').addEventListener('click', () => setFilter(null));
+  document.getElementById('clearFilterBtn').addEventListener('click', () => { activeFilter = null; renderAll(); });
 
-  renderDemoChart();
-  renderDonut();
+  renderAll();
 </script>
 
 <script>
