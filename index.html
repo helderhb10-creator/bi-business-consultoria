@@ -305,6 +305,26 @@
     .demo-kpi-row{grid-template-columns:1fr 1fr;}
   }
 
+  /* cross-filter interaction */
+  .filter-pill-wrap{margin-bottom:20px;}
+  .filter-pill{
+    display:inline-flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--cyan);
+    border-radius:999px; padding:8px 8px 8px 16px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--text);
+  }
+  .filter-pill strong{color:var(--cyan); font-weight:600;}
+  .filter-pill button{
+    width:22px; height:22px; border-radius:50%; border:none; background:var(--surface); color:var(--muted);
+    cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center;
+  }
+  .filter-pill button:hover{color:var(--text);}
+  .demo-kpi, .demo-kpi-row, .demo-chart, .demo-donut-wrap{transition:box-shadow .2s ease; margin-bottom:24px;}
+  .demo-kpi.filtered, .demo-kpi-row.filtered{box-shadow:0 0 0 1px var(--cyan);}
+  .demo-kpi-card .kc-value{transition:opacity .12s ease;}
+  .demo-bar-group.dimmed .demo-bar{opacity:0.3;}
+  .demo-bar.selected{fill:var(--amber) !important;}
+  .demo-donut-seg.dimmed{opacity:0.25;}
+  .legend-item.dimmed{opacity:0.4;}
+
   footer{padding:32px 0; text-align:center;}
   footer p{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted);}
 
@@ -693,11 +713,18 @@
     </div>
 
     <div class="demo-section">
-      <div class="demo-label">Exemplo 1 — cartão de indicador</div>
+      <div class="demo-label">Exemplos interligados — clique numa barra ou numa fatia da pizza</div>
     </div>
+    <div class="filter-pill-wrap" id="filterPillWrap" style="display:none;">
+      <div class="filter-pill">
+        <span>Filtrado por: <strong id="filterPillLabel"></strong></span>
+        <button type="button" id="clearFilterBtn" aria-label="Limpar filtro">✕</button>
+      </div>
+    </div>
+
     <div class="demo-kpi">
       <div class="demo-kpi-top">
-        <span class="kpi-name">SLA de entrega no prazo</span>
+        <span class="kpi-name" id="slaCardLabel">SLA de entrega no prazo</span>
         <div class="period-toggle" id="periodToggle">
           <button class="period-btn active" data-value="94.2" data-delta="+1,8 pp vs. mês anterior" data-dir="up">Mensal</button>
           <button class="period-btn" data-value="91.5" data-delta="+0,6 pp vs. trimestre anterior" data-dir="up">Trimestral</button>
@@ -708,44 +735,35 @@
       <div class="demo-kpi-delta up" id="kpiDelta">▲ +1,8 pp vs. mês anterior</div>
     </div>
 
-    <div class="demo-section">
-      <div class="demo-label">Exemplo 2 — cartões de indicador (visão geral)</div>
-    </div>
-    <div class="demo-kpi-row">
+    <div class="demo-kpi-row" id="kpiRow">
       <div class="demo-kpi-card">
         <div class="kc-label">SLA NO PRAZO</div>
-        <div class="kc-value cyan">96,4%</div>
+        <div class="kc-value cyan" id="kcSla">96,4%</div>
       </div>
       <div class="demo-kpi-card">
         <div class="kc-label">PEDIDOS/DIA</div>
-        <div class="kc-value">2.480</div>
+        <div class="kc-value" id="kcOrders">2.480</div>
       </div>
       <div class="demo-kpi-card">
         <div class="kc-label">CUSTO/ENTREGA</div>
-        <div class="kc-value amber">R$ 14,20</div>
+        <div class="kc-value amber" id="kcCost">R$ 14,20</div>
       </div>
       <div class="demo-kpi-card">
         <div class="kc-label">RUPTURA ESTOQUE</div>
-        <div class="kc-value">1,8%</div>
+        <div class="kc-value" id="kcStock">1,8%</div>
       </div>
     </div>
 
-    <div class="demo-section">
-      <div class="demo-label">Exemplo 3 — gráfico de barras interativo</div>
-    </div>
     <div class="demo-chart">
-      <div class="demo-chart-title">Entregas por transportadora (passe o mouse nas barras)</div>
+      <div class="demo-chart-title" id="chartTitle">Entregas por transportadora (clique numa barra para filtrar)</div>
       <svg viewBox="0 0 560 190" id="demoChartSvg">
         <!-- bars drawn/updated by JS -->
       </svg>
       <div class="demo-chart-hint">valores simulados, só para ilustrar a interatividade</div>
     </div>
 
-    <div class="demo-section">
-      <div class="demo-label">Exemplo 4 — gráfico de pizza</div>
-    </div>
     <div class="demo-donut-wrap">
-      <div class="demo-donut-title">Status dos pedidos (clique numa fatia ou na legenda)</div>
+      <div class="demo-donut-title">Status dos pedidos (clique numa fatia ou na legenda para filtrar)</div>
       <svg viewBox="0 0 200 200" class="demo-donut-svg" id="demoDonutSvg">
         <!-- segments drawn/updated by JS -->
       </svg>
@@ -767,13 +785,46 @@
   explainModal.addEventListener('click', (e) => { if(e.target === explainModal) explainModal.classList.remove('open'); });
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape') explainModal.classList.remove('open'); });
 
-  // ---- Demo 1: KPI period toggle ----
+  // ---- Cross-filtered demo data ----
+  const carrierData = [
+    { name: 'Log Rápida',   bar: 92, sla: 97.8, orders: '420',  cost: '12,40', stock: '1,0%', status: { onTime: 90, late: 8,  critical: 2 } },
+    { name: 'Trans Norte',  bar: 74, sla: 88.1, orders: '365',  cost: '15,90', stock: '2,6%', status: { onTime: 68, late: 23, critical: 9 } },
+    { name: 'Via Sul',      bar: 85, sla: 93.0, orders: '402',  cost: '13,70', stock: '1,5%', status: { onTime: 80, late: 15, critical: 5 } },
+    { name: 'Expresso RJ',  bar: 68, sla: 84.6, orders: '298',  cost: '16,90', stock: '3,4%', status: { onTime: 60, late: 27, critical: 13 } },
+    { name: 'Malha Leste',  bar: 96, sla: 98.5, orders: '451',  cost: '11,10', stock: '0,7%', status: { onTime: 94, late: 5,  critical: 1 } },
+    { name: 'Cargo Plus',   bar: 79, sla: 90.4, orders: '344',  cost: '14,60', stock: '2,0%', status: { onTime: 75, late: 19, critical: 6 } }
+  ];
+  const statusAggregate = {
+    onTime:   { key: 'onTime',   label: 'no prazo',        color: 'var(--cyan)',  sla: '100%', orders: '1.786', cost: '12,10', stock: '0,6%' },
+    late:     { key: 'late',     label: 'atraso leve',      color: 'var(--amber)', sla: '0%',   orders: '496',   cost: '15,80', stock: '2,1%' },
+    critical: { key: 'critical', label: 'atraso crítico',   color: '#EF5A5A',      sla: '0%',   orders: '198',   cost: '19,40', stock: '4,8%' }
+  };
+  const overall = { sla: 96.4, orders: '2.480', cost: '14,20', stock: '1,8%' };
+
+  let activeFilter = null; // { type: 'carrier'|'status', key }
+
+  // ---- DOM refs ----
   const periodToggle = document.getElementById('periodToggle');
   const kpiValue = document.getElementById('kpiValue');
   const kpiDelta = document.getElementById('kpiDelta');
+  const slaCardLabel = document.getElementById('slaCardLabel');
+  const kpiRowEl = document.getElementById('kpiRow');
+  const kcSla = document.getElementById('kcSla');
+  const kcOrders = document.getElementById('kcOrders');
+  const kcCost = document.getElementById('kcCost');
+  const kcStock = document.getElementById('kcStock');
+  const chartSvg = document.getElementById('demoChartSvg');
+  const chartTitle = document.getElementById('chartTitle');
+  const donutSvg = document.getElementById('demoDonutSvg');
+  const legendEl = document.getElementById('demoLegend');
+  const demoKpiEl = document.querySelector('.demo-kpi');
+  const filterPillWrap = document.getElementById('filterPillWrap');
+  const filterPillLabel = document.getElementById('filterPillLabel');
+
+  // ---- Period toggle (independent of cross-filter, only active when no filter) ----
   periodToggle.addEventListener('click', (e) => {
     const btn = e.target.closest('.period-btn');
-    if(!btn) return;
+    if(!btn || activeFilter) return;
     periodToggle.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     kpiValue.style.opacity = '0';
@@ -786,99 +837,161 @@
     }, 120);
   });
 
-  // ---- Demo 2: interactive bar chart ----
-  const chartData = [
-    { label: 'Log Rápida', value: 92 },
-    { label: 'Trans Norte', value: 74 },
-    { label: 'Via Sul', value: 85 },
-    { label: 'Expresso RJ', value: 68 },
-    { label: 'Malha Leste', value: 96 },
-    { label: 'Cargo Plus', value: 79 }
-  ];
-  const chartSvg = document.getElementById('demoChartSvg');
+  // ---- Bar chart ----
   function renderDemoChart(){
     const barWidth = 56, gap = 30, chartHeight = 130, baseY = 150;
     let svgContent = '';
-    chartData.forEach((d, i) => {
+    carrierData.forEach((d, i) => {
       const x = 20 + i * (barWidth + gap);
-      const h = (d.value / 100) * chartHeight;
+      const h = (d.bar / 100) * chartHeight;
       const y = baseY - h;
       svgContent += `
-        <g class="demo-bar-group" data-value="${d.value}" data-label="${d.label}">
+        <g class="demo-bar-group" data-i="${i}">
           <rect class="demo-bar" x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="4"></rect>
-          <text x="${x + barWidth/2}" y="${baseY + 18}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">${d.label}</text>
-          <text class="demo-tooltip" x="${x + barWidth/2}" y="${y - 10}" text-anchor="middle" opacity="0" font-weight="700">${d.value}%</text>
+          <text x="${x + barWidth/2}" y="${baseY + 18}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">${d.name}</text>
+          <text class="demo-tooltip" x="${x + barWidth/2}" y="${y - 10}" text-anchor="middle" opacity="0" font-weight="700">${d.bar}%</text>
         </g>`;
     });
     chartSvg.innerHTML = svgContent;
-
     chartSvg.querySelectorAll('.demo-bar-group').forEach(g => {
       const tooltip = g.querySelector('.demo-tooltip');
       g.addEventListener('mouseenter', () => { tooltip.setAttribute('opacity', '1'); });
       g.addEventListener('mouseleave', () => { tooltip.setAttribute('opacity', '0'); });
+      g.addEventListener('click', () => {
+        const i = Number(g.dataset.i);
+        setFilter(activeFilter && activeFilter.type === 'carrier' && activeFilter.key === i ? null : { type: 'carrier', key: i });
+      });
     });
   }
-  renderDemoChart();
 
-  // ---- Demo 3: donut / pizza chart ----
-  const donutData = [
-    { label: 'No prazo', value: 72, color: 'var(--cyan)' },
-    { label: 'Atraso leve', value: 20, color: 'var(--amber)' },
-    { label: 'Atraso crítico', value: 8, color: '#EF5A5A' }
-  ];
-  const donutSvg = document.getElementById('demoDonutSvg');
-  const legendEl = document.getElementById('demoLegend');
+  // ---- Donut / pizza ----
   const R = 70, CX = 100, CY = 100, STROKE = 26, CIRC = 2 * Math.PI * R;
+  function currentDonutData(){
+    if(activeFilter && activeFilter.type === 'carrier'){
+      const s = carrierData[activeFilter.key].status;
+      return [
+        { key: 'onTime', label: 'No prazo', value: s.onTime, color: 'var(--cyan)' },
+        { key: 'late', label: 'Atraso leve', value: s.late, color: 'var(--amber)' },
+        { key: 'critical', label: 'Atraso crítico', value: s.critical, color: '#EF5A5A' }
+      ];
+    }
+    return [
+      { key: 'onTime', label: 'No prazo', value: 72, color: 'var(--cyan)' },
+      { key: 'late', label: 'Atraso leve', value: 20, color: 'var(--amber)' },
+      { key: 'critical', label: 'Atraso crítico', value: 8, color: '#EF5A5A' }
+    ];
+  }
 
   function renderDonut(){
+    const donutData = currentDonutData();
     let offset = 0;
     let svgParts = `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#2A3347" stroke-width="${STROKE}"></circle>`;
     let legendParts = '';
-    donutData.forEach((d, i) => {
+    donutData.forEach((d) => {
       const segLen = (d.value / 100) * CIRC;
-      svgParts += `<circle class="demo-donut-seg" data-i="${i}" cx="${CX}" cy="${CY}" r="${R}" fill="none"
-        stroke="${d.color}" stroke-width="${STROKE}" stroke-dasharray="${segLen} ${CIRC}"
+      const isSelected = activeFilter && activeFilter.type === 'status' && activeFilter.key === d.key;
+      const isDimmed = activeFilter && activeFilter.type === 'status' && !isSelected;
+      svgParts += `<circle class="demo-donut-seg${isDimmed ? ' dimmed' : ''}" data-key="${d.key}" cx="${CX}" cy="${CY}" r="${R}" fill="none"
+        stroke="${d.color}" stroke-width="${isSelected ? STROKE + 4 : STROKE}" stroke-dasharray="${segLen} ${CIRC}"
         stroke-dashoffset="${-offset}" transform="rotate(-90 ${CX} ${CY})"></circle>`;
       offset += segLen;
-      legendParts += `<div class="legend-item" data-i="${i}">
+      legendParts += `<div class="legend-item${isDimmed ? ' dimmed' : ''}${isSelected ? ' active' : ''}" data-key="${d.key}">
         <span class="legend-dot" style="background:${d.color};"></span>
         <span class="legend-label">${d.label}</span>
         <span class="legend-pct">${d.value}%</span>
       </div>`;
     });
-    svgParts += `<text id="donutCenterVal" x="${CX}" y="${CY - 4}" text-anchor="middle" fill="#EAECF2" font-family="IBM Plex Mono, monospace" font-size="22" font-weight="700">72%</text>
-      <text id="donutCenterLbl" x="${CX}" y="${CY + 16}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">no prazo</text>`;
+    const centerVal = activeFilter && activeFilter.type === 'status' ? donutData.find(d => d.key === activeFilter.key).value : donutData[0].value;
+    const centerLbl = activeFilter && activeFilter.type === 'status' ? donutData.find(d => d.key === activeFilter.key).label : donutData[0].label;
+    svgParts += `<text x="${CX}" y="${CY - 4}" text-anchor="middle" fill="#EAECF2" font-family="IBM Plex Mono, monospace" font-size="22" font-weight="700">${centerVal}%</text>
+      <text x="${CX}" y="${CY + 16}" text-anchor="middle" fill="#8B93A7" font-family="IBM Plex Mono, monospace" font-size="10.5">${centerLbl.toLowerCase()}</text>`;
     donutSvg.innerHTML = svgParts;
     legendEl.innerHTML = legendParts;
-    attachDonutEvents();
-  }
 
-  function highlightSegment(i){
-    donutSvg.querySelectorAll('.demo-donut-seg').forEach(s => s.classList.remove('hover'));
-    legendEl.querySelectorAll('.legend-item').forEach(l => l.classList.remove('active'));
-    const centerVal = document.getElementById('donutCenterVal');
-    const centerLbl = document.getElementById('donutCenterLbl');
-    if(i === null){
-      centerVal.textContent = donutData[0].value + '%';
-      centerLbl.textContent = donutData[0].label.toLowerCase();
-      return;
-    }
-    donutSvg.querySelector(`.demo-donut-seg[data-i="${i}"]`).classList.add('hover');
-    legendEl.querySelector(`.legend-item[data-i="${i}"]`).classList.add('active');
-    centerVal.textContent = donutData[i].value + '%';
-    centerLbl.textContent = donutData[i].label.toLowerCase();
-  }
-
-  function attachDonutEvents(){
     donutSvg.querySelectorAll('.demo-donut-seg').forEach(seg => {
-      seg.addEventListener('mouseenter', () => highlightSegment(Number(seg.dataset.i)));
-      seg.addEventListener('mouseleave', () => highlightSegment(null));
+      seg.addEventListener('click', () => {
+        const key = seg.dataset.key;
+        setFilter(activeFilter && activeFilter.type === 'status' && activeFilter.key === key ? null : { type: 'status', key });
+      });
     });
     legendEl.querySelectorAll('.legend-item').forEach(item => {
-      item.addEventListener('mouseenter', () => highlightSegment(Number(item.dataset.i)));
-      item.addEventListener('mouseleave', () => highlightSegment(null));
+      item.addEventListener('click', () => {
+        const key = item.dataset.key;
+        setFilter(activeFilter && activeFilter.type === 'status' && activeFilter.key === key ? null : { type: 'status', key });
+      });
     });
   }
+
+  // ---- Shared filter state: updates all 4 examples together ----
+  function setFilter(filter){
+    activeFilter = filter;
+
+    if(!activeFilter){
+      filterPillWrap.style.display = 'none';
+      demoKpiEl.classList.remove('filtered');
+      kpiRowEl.classList.remove('filtered');
+      slaCardLabel.textContent = 'SLA de entrega no prazo';
+      periodToggle.style.opacity = '1';
+      periodToggle.style.pointerEvents = 'auto';
+      const activeBtn = periodToggle.querySelector('.period-btn.active');
+      kpiValue.innerHTML = activeBtn.dataset.value.replace('.', ',') + '<span class="unit">%</span>';
+      kpiDelta.className = 'demo-kpi-delta ' + activeBtn.dataset.dir;
+      kpiDelta.textContent = (activeBtn.dataset.dir === 'up' ? '▲ ' : '▼ ') + activeBtn.dataset.delta;
+      kcSla.textContent = overall.sla.toString().replace('.', ',') + '%';
+      kcOrders.textContent = overall.orders;
+      kcCost.textContent = 'R$ ' + overall.cost;
+      kcStock.textContent = overall.stock;
+      chartTitle.textContent = 'Entregas por transportadora (clique numa barra para filtrar)';
+    } else if(activeFilter.type === 'carrier'){
+      const c = carrierData[activeFilter.key];
+      filterPillWrap.style.display = 'block';
+      filterPillLabel.textContent = c.name;
+      demoKpiEl.classList.add('filtered');
+      kpiRowEl.classList.add('filtered');
+      slaCardLabel.textContent = 'SLA de entrega no prazo — ' + c.name;
+      periodToggle.style.opacity = '0.4';
+      periodToggle.style.pointerEvents = 'none';
+      kpiValue.innerHTML = c.sla.toString().replace('.', ',') + '<span class="unit">%</span>';
+      kpiDelta.className = 'demo-kpi-delta up';
+      kpiDelta.textContent = 'indicador filtrado por transportadora';
+      kcSla.textContent = c.sla.toString().replace('.', ',') + '%';
+      kcOrders.textContent = c.orders;
+      kcCost.textContent = 'R$ ' + c.cost;
+      kcStock.textContent = c.stock;
+      chartTitle.textContent = 'Entregas por transportadora — filtrado por ' + c.name;
+    } else if(activeFilter.type === 'status'){
+      const s = statusAggregate[activeFilter.key];
+      filterPillWrap.style.display = 'block';
+      filterPillLabel.textContent = 'pedidos ' + s.label;
+      demoKpiEl.classList.add('filtered');
+      kpiRowEl.classList.add('filtered');
+      slaCardLabel.textContent = 'SLA de entrega no prazo — pedidos ' + s.label;
+      periodToggle.style.opacity = '0.4';
+      periodToggle.style.pointerEvents = 'none';
+      kpiValue.innerHTML = s.sla + '<span class="unit"></span>';
+      kpiDelta.className = 'demo-kpi-delta up';
+      kpiDelta.textContent = 'indicador filtrado por status do pedido';
+      kcSla.textContent = s.sla;
+      kcOrders.textContent = s.orders;
+      kcCost.textContent = 'R$ ' + s.cost;
+      kcStock.textContent = s.stock;
+      chartTitle.textContent = 'Entregas por transportadora (destacado o status selecionado)';
+    }
+
+    // bar chart highlight/dim
+    chartSvg.querySelectorAll('.demo-bar-group').forEach(g => {
+      const i = Number(g.dataset.i);
+      const isSelected = activeFilter && activeFilter.type === 'carrier' && activeFilter.key === i;
+      g.classList.toggle('dimmed', !!activeFilter && !isSelected);
+      g.querySelector('.demo-bar').classList.toggle('selected', isSelected);
+    });
+
+    renderDonut();
+  }
+
+  document.getElementById('clearFilterBtn').addEventListener('click', () => setFilter(null));
+
+  renderDemoChart();
   renderDonut();
 </script>
 
