@@ -203,6 +203,14 @@
   .booking-fallback .btn-primary, .booking-fallback .btn-ghost{width:100%; justify-content:center; border:none; cursor:pointer; text-align:center;}
   .booking-fallback .btn-ghost{border:1px solid var(--line);}
   .booking-fallback-note{font-size:11.5px; color:var(--cyan); text-align:center; min-height:14px;}
+  .booking-success{padding:20px 10px 6px; text-align:center;}
+  .booking-success-check{
+    width:52px; height:52px; border-radius:50%; background:var(--cyan); color:#08211E;
+    font-size:26px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    margin:0 auto 16px;
+  }
+  .booking-success-title{font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:6px;}
+  .booking-success-sub{font-size:13.5px; color:var(--muted);}
 
   /* modal */
   .modal-overlay{
@@ -755,11 +763,17 @@
         <input type="text" id="clientName" placeholder="Seu nome">
         <input type="text" id="clientCompany" placeholder="Empresa">
         <button class="btn-primary" id="confirmBtn" type="button">Confirmar agendamento →</button>
-        <p class="booking-note">Tentaremos abrir seu app de e-mail já preenchido.</p>
+        <p class="booking-note" id="confirmNote">Enviaremos o pedido direto para nós — sem abrir nada no seu computador.</p>
+      </div>
+
+      <div class="booking-success" id="bookingSuccess" style="display:none;">
+        <div class="booking-success-check">✓</div>
+        <p class="booking-success-title">Agendamento confirmado!</p>
+        <p class="booking-success-sub">Recebemos seu pedido e vamos confirmar o horário em breve.</p>
       </div>
 
       <div class="booking-fallback" id="bookingFallback" style="display:none;">
-        <p class="booking-fallback-title">Se o e-mail não abriu, use uma dessas opções:</p>
+        <p class="booking-fallback-title">Não deu pra enviar automaticamente — use uma dessas opções:</p>
         <a class="btn-primary" id="fallbackWhatsapp" href="#" target="_blank" rel="noopener">Enviar pelo WhatsApp →</a>
         <button class="btn-ghost" id="fallbackCopy" type="button">Copiar informações</button>
         <p class="booking-fallback-note" id="fallbackCopyNote"></p>
@@ -1193,7 +1207,11 @@
     renderCalendar();
   });
 
-  document.getElementById('confirmBtn').addEventListener('click', () => {
+  // Depois de criar seu formulário em https://formspree.io, troque o valor abaixo
+  // pelo endpoint copiado de lá (formato: https://formspree.io/f/xxxxxxxx)
+  const FORM_ENDPOINT = 'https://formspree.io/f/xoeawleq';
+
+  document.getElementById('confirmBtn').addEventListener('click', async () => {
     if(!selectedDate || !selectedTime) return;
     const name = document.getElementById('clientName').value.trim() || 'Não informado';
     const company = document.getElementById('clientCompany').value.trim() || 'Não informado';
@@ -1206,12 +1224,11 @@ Data: ${dateLabel}
 Horário: ${selectedTime}
 Nome: ${name}
 Empresa: ${company}`;
-    const mailto = `mailto:bibusiness.consultoria@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainMessage)}`;
 
-    // tenta abrir o app de e-mail (funciona se o dispositivo tiver um configurado)
-    window.location.href = mailto;
-
-    // mostra alternativas confiáveis, caso o e-mail não abra
+    const confirmBtn = document.getElementById('confirmBtn');
+    const confirmNote = document.getElementById('confirmNote');
+    const bookingConfirm = document.getElementById('bookingConfirm');
+    const bookingSuccess = document.getElementById('bookingSuccess');
     const fallback = document.getElementById('bookingFallback');
     const waLink = document.getElementById('fallbackWhatsapp');
     const copyBtn = document.getElementById('fallbackCopy');
@@ -1227,7 +1244,36 @@ Empresa: ${company}`;
         copyNote.textContent = plainMessage;
       }
     };
-    fallback.style.display = 'flex';
+
+    if(!FORM_ENDPOINT || FORM_ENDPOINT === 'SEU_FORM_ID_AQUI'){
+      // ainda não configurado: usa o fallback direto
+      fallback.style.display = 'flex';
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Enviando...';
+    confirmNote.textContent = '';
+
+    try {
+      const res = await fetch(FORM_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: name, empresa: company, data: dateLabel, horario: selectedTime, assunto: subject, mensagem: plainMessage })
+      });
+
+      if(res.ok){
+        bookingConfirm.style.display = 'none';
+        bookingSuccess.style.display = 'block';
+        setTimeout(() => { closeModal(); }, 2200);
+      } else {
+        throw new Error('Falha no envio');
+      }
+    } catch (err) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirmar agendamento →';
+      fallback.style.display = 'flex';
+    }
   });
 
   renderCalendar();
