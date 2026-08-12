@@ -184,6 +184,10 @@
   .times-label{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted); margin-bottom:12px;}
   .times-label span{color:var(--cyan);}
   .time-slots{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .time-slots-empty{
+    grid-column:1/-1; text-align:center; padding:14px 10px; color:var(--muted);
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; border:1px dashed var(--line); border-radius:8px;
+  }
   .time-slot{
     padding:9px 0; text-align:center; border:1px solid var(--line); border-radius:6px;
     font-family:'IBM Plex Mono', monospace; font-size:13px; cursor:pointer; color:var(--text); background:var(--surface-2);
@@ -749,14 +753,7 @@
 
       <div class="booking-times" id="bookingTimes" style="display:none;">
         <div class="times-label">Horários disponíveis — <span id="selectedDateLabel"></span></div>
-        <div class="time-slots" id="timeSlots">
-          <div class="time-slot">09:00</div>
-          <div class="time-slot">10:30</div>
-          <div class="time-slot">13:00</div>
-          <div class="time-slot">14:30</div>
-          <div class="time-slot">16:00</div>
-          <div class="time-slot">17:30</div>
-        </div>
+        <div class="time-slots" id="timeSlots"></div>
       </div>
 
       <div class="booking-confirm" id="bookingConfirm" style="display:none;">
@@ -1140,6 +1137,7 @@
   const calGrid = document.getElementById('calGrid');
   const calMonthLabel = document.getElementById('calMonthLabel');
   const bookingTimes = document.getElementById('bookingTimes');
+  const timeSlots = document.getElementById('timeSlots');
   const bookingConfirm = document.getElementById('bookingConfirm');
   const selectedDateLabel = document.getElementById('selectedDateLabel');
 
@@ -1178,12 +1176,35 @@
     }
   }
 
+  const ALL_TIME_SLOTS = ['09:00', '10:30', '13:00', '14:30', '16:00', '17:30'];
+
+  function isSameDay(a, b){
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  function renderTimeSlots(date){
+    const now = new Date();
+    let slots = ALL_TIME_SLOTS;
+    if(isSameDay(date, now)){
+      slots = ALL_TIME_SLOTS.filter(t => {
+        const [h, m] = t.split(':').map(Number);
+        const slotDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m);
+        return slotDate > now;
+      });
+    }
+    if(slots.length === 0){
+      timeSlots.innerHTML = '<div class="time-slots-empty">Sem horários disponíveis hoje — escolha outro dia.</div>';
+    } else {
+      timeSlots.innerHTML = slots.map(t => `<div class="time-slot">${t}</div>`).join('');
+    }
+  }
+
   function selectDate(date, cellEl){
     document.querySelectorAll('.cal-day.selected').forEach(el => el.classList.remove('selected'));
     cellEl.classList.add('selected');
     selectedDate = date;
     selectedTime = null;
-    document.querySelectorAll('.time-slot.selected').forEach(el => el.classList.remove('selected'));
+    renderTimeSlots(date);
     selectedDateLabel.textContent = date.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', weekday:'long' });
     bookingTimes.style.display = 'block';
     bookingConfirm.style.display = 'none';
